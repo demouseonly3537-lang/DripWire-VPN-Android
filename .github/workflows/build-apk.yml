@@ -31,12 +31,19 @@ jobs:
 
       - name: Install SDK platform, build-tools and NDK
         run: |
-          set -euxo pipefail
+          set -eux
+          # `yes` gets SIGPIPE once sdkmanager stops reading stdin at the end
+          # of the install; that's expected and harmless, so this line is
+          # deliberately not run under `pipefail` — success is checked for
+          # real below instead of trusting this command's own exit code.
           yes | sdkmanager --install \
             "platforms;android-34" \
             "build-tools;34.0.0" \
-            "ndk;26.3.11579264"
+            "ndk;26.3.11579264" || true
           echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/26.3.11579264" >> "$GITHUB_ENV"
+          test -d "$ANDROID_SDK_ROOT/platforms/android-34"
+          test -d "$ANDROID_SDK_ROOT/build-tools/34.0.0"
+          test -d "$ANDROID_SDK_ROOT/ndk/26.3.11579264"
 
       - name: Fetch hysteria client binaries (official release, apernet/hysteria)
         run: |
