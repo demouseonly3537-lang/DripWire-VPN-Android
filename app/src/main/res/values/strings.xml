@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DripWire VPN</string>
+    <string name="hint_config">Paste your dripwire config JSON here…</string>
+    <string name="btn_connect">Connect</string>
+    <string name="btn_disconnect">Disconnect</string>
+    <string name="status_idle">Not connected</string>
+    <string name="status_starting">Connecting…</string>
+    <string name="status_connected">Connected — %1$s</string>
+    <string name="status_error">Error: %1$s</string>
+    <string name="notif_channel_name">DripWire VPN</string>
+    <string name="notif_title">DripWire VPN is running</string>
+    <string name="notif_text">Tunnel active</string>
+    <string name="error_bad_json">Could not parse that config. Check it\'s the same JSON you were given.</string>
+    <string name="error_missing_fields">Config is missing an inbound (socks) or outbound (hysteria) section.</string>
+</resources>

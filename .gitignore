@@ -1,0 +1,14 @@
+*.iml
+.gradle/
+/local.properties
+.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+*.apk
+*.ap_
+*.dex
+# Fetched/built by CI, never committed (native executables + JNI lib per ABI):
+app/src/main/jniLibs/
