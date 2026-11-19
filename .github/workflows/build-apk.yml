@@ -100,8 +100,12 @@ jobs:
             test -x "$cc"
             dir="$GITHUB_WORKSPACE/app/src/main/jniLibs/$abi"
             mkdir -p "$dir"
+            # -checklinkname=0: github.com/wlynxg/anet (a wireguard-go dependency) uses a
+            # //go:linkname into the std "net" package's private zoneCache; Go >=1.23 refuses
+            # that by default ("invalid reference to net.zoneCache") unless this is passed —
+            # see https://github.com/wlynxg/anet's README.
             env CGO_ENABLED=1 CC="$cc" GOOS=android GOARCH="$goarch" GOARM=7 \
-              go build -trimpath -ldflags "-s -w" -o "$dir/libxray.so" ./main
+              go build -trimpath -ldflags "-s -w -checklinkname=0" -o "$dir/libxray.so" ./main
             chmod +x "$dir/libxray.so"
           done
 
