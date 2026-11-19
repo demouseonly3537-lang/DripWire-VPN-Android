@@ -6,6 +6,7 @@ import android.net.VpnService
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import cc.dripwire.vpn.databinding.ActivityMainBinding
+import cc.dripwire.vpn.proxy.ConfigParseException
 
 class MainActivity : AppCompatActivity() {
 
@@ -44,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         try {
             ConfigTranslator.parse(raw) // validate before asking for VPN permission
         } catch (e: ConfigParseException) {
-            binding.statusText.text = getString(R.string.error_bad_json)
+            binding.statusText.text = getString(R.string.error_bad_json, e.message ?: "")
             return
         }
         prefs.edit().putString(PREF_LAST_CONFIG, raw).apply()

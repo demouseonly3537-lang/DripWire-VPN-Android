@@ -39,10 +39,11 @@ android {
     }
 
     // The jniLibs/<abi>/lib*.so files under this module are NOT all real JNI libraries —
-    // libhysteria.so and libtun2socks.so (produced by the CI workflow, see
+    // libhysteria.so and libxray.so (produced by the CI workflow, see
     // .github/workflows/build-apk.yml) are actually standalone native executables, bundled
     // this way on purpose so the OS installer extracts them to a real, executable path
     // (applicationInfo.nativeLibraryDir) that this app can run with ProcessBuilder.
+    // Only libhev-socks5-tunnel.so is a genuine JNI library, loaded in-process.
     // That trick only works if native libs are extracted uncompressed, hence this block.
     packaging {
         jniLibs {
@@ -60,4 +61,6 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    // Pure-Java YAML parser used only to read Clash-style "proxies:" configs.
+    implementation("org.yaml:snakeyaml:2.2")
 }

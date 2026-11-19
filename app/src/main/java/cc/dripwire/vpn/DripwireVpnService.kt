@@ -7,6 +7,7 @@ import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import cc.dripwire.vpn.proxy.TunnelPlan
 import hev.htproxy.TProxyService
 import java.io.File
 import java.net.InetSocketAddress
@@ -15,19 +16,22 @@ import java.net.Socket
 /**
  * Brings up the tunnel:
  *
- *   TUN (this service) --fd--> hev-socks5-tunnel --SOCKS5 127.0.0.1--> hysteria client
- *   process --Hysteria2/QUIC--> dripwire server
+ *   TUN (this service) --fd--> hev-socks5-tunnel --SOCKS5 127.0.0.1--> one of two engines:
+ *       - the hysteria client binary (protocol: hysteria / hysteria2), or
+ *       - the Xray-core binary (protocol: vmess / vless / trojan / shadowsocks / socks)
+ *   --> the real proxy server
  *
- * Both native helpers are bundled as fake "lib*.so" files (see
- * app/build.gradle.kts packaging block and the CI workflow) purely so the
- * Android installer extracts them somewhere this app is allowed to execute
- * a binary from; libhysteria.so is run as a child process, while
- * libhev-socks5-tunnel.so is a real JNI library loaded in-process.
+ * Which engine runs is decided once per connection by ConfigTranslator, based on whatever
+ * format/protocol was found in the pasted config (see TunnelPlan). Both native binaries are
+ * bundled as fake "lib*.so" files (see app/build.gradle.kts packaging block and the CI
+ * workflow) purely so the Android installer extracts them somewhere this app is allowed to
+ * execute a binary from; each is then run as a child process. hev-socks5-tunnel is the one
+ * real JNI library here, loaded in-process.
  */
 class DripwireVpnService : VpnService() {
 
     private var tunFd: ParcelFileDescriptor? = null
-    private var hysteriaProcess: Process? = null
+    private var engineProcess: Process? = null
     private var tunnelRunning = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -52,30 +56,34 @@ class DripwireVpnService : VpnService() {
 
     private fun connect(rawConfig: String) {
         try {
-            val cfg = ConfigTranslator.parse(rawConfig)
+            val plan = ConfigTranslator.parse(rawConfig)
             val mtu = 1500
 
-            val hysteriaYaml = ConfigTranslator.writeHysteriaClientConfig(
-                cfg, File(filesDir, "hysteria-client.yaml"),
-            )
-            val tunnelYaml = ConfigTranslator.writeTunnelConfig(
-                cfg, mtu, File(filesDir, "tproxy.yaml"),
-            )
+            when (plan) {
+                is TunnelPlan.ViaHysteria -> launchHysteria(
+                    ConfigTranslator.writeHysteriaClientConfig(
+                        plan.outbound, plan.socksPort, File(filesDir, "hysteria-client.yaml"),
+                    ),
+                )
+                is TunnelPlan.ViaXray -> launchXray(plan.configJson)
+            }
+            waitForPort("127.0.0.1", plan.socksPort, timeoutMs = 8000)
 
-            launchHysteria(hysteriaYaml)
-            waitForPort("127.0.0.1", cfg.socksListenPort, timeoutMs = 8000)
+            val tunnelYaml = ConfigTranslator.writeTunnelConfig(
+                plan.socksPort, mtu, File(filesDir, "tproxy.yaml"),
+            )
 
             val pfd = Builder()
-                .setSession(cfg.remarks)
+                .setSession(plan.remarks)
                 .addAddress("10.8.0.2", 32)
                 .addRoute("0.0.0.0", 0)
                 .addDnsServer("1.1.1.1")
                 .addDnsServer("8.8.8.8")
                 .setMtu(mtu)
                 .apply {
-                    // Without this, the hysteria subprocess's own outbound
-                    // connection would be captured by the 0.0.0.0/0 route
-                    // above and loop back into the tunnel it is feeding.
+                    // Without this, the engine process's own outbound connection would be
+                    // captured by the 0.0.0.0/0 route above and loop back into the tunnel
+                    // it is feeding.
                     try {
                         addDisallowedApplication(packageName)
                     } catch (e: Exception) {
@@ -89,7 +97,7 @@ class DripwireVpnService : VpnService() {
             if (!started) throw IllegalStateException("hev-socks5-tunnel refused to start")
             tunnelRunning = true
 
-            broadcastStatus(Status.Connected(cfg.remarks))
+            broadcastStatus(Status.Connected(plan.remarks))
         } catch (e: Exception) {
             Log.e(TAG, "connect failed", e)
             broadcastStatus(Status.Error(e.message ?: e.toString()))
@@ -99,20 +107,29 @@ class DripwireVpnService : VpnService() {
     }
 
     private fun launchHysteria(configFile: File) {
-        val binary = File(applicationInfo.nativeLibraryDir, "libhysteria.so")
+        launchEngine("libhysteria.so", listOf("client", "-c", configFile.absolutePath), "hysteria")
+    }
+
+    private fun launchXray(configJson: String) {
+        val configFile = File(filesDir, "xray-config.json").apply { writeText(configJson) }
+        launchEngine("libxray.so", listOf("run", "-c", configFile.absolutePath), "xray")
+    }
+
+    private fun launchEngine(libraryFileName: String, args: List<String>, logTag: String) {
+        val binary = File(applicationInfo.nativeLibraryDir, libraryFileName)
         if (!binary.exists()) {
             throw IllegalStateException(
-                "libhysteria.so not found in ${applicationInfo.nativeLibraryDir} — " +
+                "$libraryFileName not found in ${applicationInfo.nativeLibraryDir} — " +
                     "this APK was not built by the project's CI workflow",
             )
         }
-        val pb = ProcessBuilder(binary.absolutePath, "client", "-c", configFile.absolutePath)
+        val pb = ProcessBuilder(listOf(binary.absolutePath) + args)
         pb.redirectErrorStream(true)
         pb.directory(filesDir)
         val proc = pb.start()
-        hysteriaProcess = proc
+        engineProcess = proc
         Thread {
-            proc.inputStream.bufferedReader().forEachLine { Log.d("hysteria", it) }
+            proc.inputStream.bufferedReader().forEachLine { Log.d(logTag, it) }
         }.apply { isDaemon = true }.start()
     }
 
@@ -129,7 +146,7 @@ class DripwireVpnService : VpnService() {
             }
         }
         throw IllegalStateException(
-            "hysteria client never opened its local SOCKS5 port ($host:$port): $lastError",
+            "The proxy engine never opened its local SOCKS5 port ($host:$port): $lastError",
         )
     }
 
@@ -138,8 +155,8 @@ class DripwireVpnService : VpnService() {
             try { TProxyService.TProxyStopService() } catch (e: Exception) { Log.w(TAG, e) }
             tunnelRunning = false
         }
-        hysteriaProcess?.destroy()
-        hysteriaProcess = null
+        engineProcess?.destroy()
+        engineProcess = null
         try { tunFd?.close() } catch (e: Exception) { Log.w(TAG, e) }
         tunFd = null
         broadcastStatus(Status.Idle)

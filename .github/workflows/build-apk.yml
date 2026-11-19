@@ -8,6 +8,7 @@ on:
 env:
   HYSTERIA_VERSION: "app/v2.13.0"
   HEV_TUNNEL_VERSION: "2.18.0"
+  XRAY_CORE_REF: "main"
 
 jobs:
   build:
@@ -21,6 +22,11 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -56,6 +62,35 @@ jobs:
             url="https://github.com/apernet/hysteria/releases/download/${HYSTERIA_VERSION}/hysteria-android-${goarch}"
             curl -fL --retry 3 -o "$dir/libhysteria.so" "$url"
             chmod +x "$dir/libhysteria.so"
+          done
+
+      - name: Build Xray-core binaries (vmess/vless/trojan/shadowsocks/socks engine)
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 --branch "${XRAY_CORE_REF}" https://github.com/XTLS/Xray-core.git /tmp/xray-src
+          cd /tmp/xray-src
+          # Prefer the newest release tag over the branch HEAD above, when one exists —
+          # this only narrows what we already have, so a lookup failure just means we
+          # build the branch we cloned instead of silently doing nothing.
+          latest_tag="$(git ls-remote --tags --refs https://github.com/XTLS/Xray-core.git \
+            | awk -F/ '{print $3}' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)"
+          if [ -n "$latest_tag" ]; then
+            git fetch --depth 1 origin "refs/tags/$latest_tag:refs/tags/$latest_tag"
+            git checkout "refs/tags/$latest_tag"
+          fi
+          echo "Building Xray-core @ $(git rev-parse --short HEAD) ($(git describe --tags --always))"
+
+          # No NDK needed: a pure-Go (CGO_ENABLED=0) build targeting GOOS=android links
+          # against Android's bionic libc syscall table without a C cross-compiler,
+          # the same way this project's hysteria binaries are built upstream.
+          declare -A map=( [arm64-v8a]=arm64 [armeabi-v7a]=arm [x86_64]=amd64 [x86]=386 )
+          for abi in "${!map[@]}"; do
+            goarch="${map[$abi]}"
+            dir="$GITHUB_WORKSPACE/app/src/main/jniLibs/$abi"
+            mkdir -p "$dir"
+            env CGO_ENABLED=0 GOOS=android GOARCH="$goarch" GOARM=7 \
+              go build -trimpath -ldflags "-s -w" -o "$dir/libxray.so" ./main
+            chmod +x "$dir/libxray.so"
           done
 
       - name: Build hev-socks5-tunnel native library (ndk-build)
