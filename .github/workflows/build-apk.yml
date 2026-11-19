@@ -80,15 +80,27 @@ jobs:
           fi
           echo "Building Xray-core @ $(git rev-parse --short HEAD) ($(git describe --tags --always))"
 
-          # No NDK needed: a pure-Go (CGO_ENABLED=0) build targeting GOOS=android links
-          # against Android's bionic libc syscall table without a C cross-compiler,
-          # the same way this project's hysteria binaries are built upstream.
-          declare -A map=( [arm64-v8a]=arm64 [armeabi-v7a]=arm [x86_64]=amd64 [x86]=386 )
-          for abi in "${!map[@]}"; do
-            goarch="${map[$abi]}"
+          # GOOS=android needs cgo (external linking) for at least 386 — confirmed by a
+          # failed CI run that built fine for arm64/arm/amd64 with CGO_ENABLED=0 but hit
+          # "android/386 requires external (cgo) linking, but cgo is not enabled". Rather
+          # than special-case one ABI, every ABI uses the NDK's clang here (api 24, matching
+          # minSdk/APP_PLATFORM elsewhere in this workflow) — the same technique real Android
+          # Go builds (e.g. v2rayNG's libv2ray) use.
+          NDK_BIN="$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          declare -A goarch_map=( [arm64-v8a]=arm64 [armeabi-v7a]=arm [x86_64]=amd64 [x86]=386 )
+          declare -A cc_map=(
+            [arm64-v8a]="$NDK_BIN/aarch64-linux-android24-clang"
+            [armeabi-v7a]="$NDK_BIN/armv7a-linux-androideabi24-clang"
+            [x86_64]="$NDK_BIN/x86_64-linux-android24-clang"
+            [x86]="$NDK_BIN/i686-linux-android24-clang"
+          )
+          for abi in "${!goarch_map[@]}"; do
+            goarch="${goarch_map[$abi]}"
+            cc="${cc_map[$abi]}"
+            test -x "$cc"
             dir="$GITHUB_WORKSPACE/app/src/main/jniLibs/$abi"
             mkdir -p "$dir"
-            env CGO_ENABLED=0 GOOS=android GOARCH="$goarch" GOARM=7 \
+            env CGO_ENABLED=1 CC="$cc" GOOS=android GOARCH="$goarch" GOARM=7 \
               go build -trimpath -ldflags "-s -w" -o "$dir/libxray.so" ./main
             chmod +x "$dir/libxray.so"
           done
