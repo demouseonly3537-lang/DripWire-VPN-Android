@@ -1,6 +1,7 @@
 package cc.dripwire.vpn.proxy
 
 import android.util.Base64
+import cc.dripwire.vpn.ConfigTranslator
 import org.json.JSONObject
 import java.net.URI
 import java.net.URLDecoder

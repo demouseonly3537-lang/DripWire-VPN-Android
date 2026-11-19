@@ -1,5 +1,6 @@
 package cc.dripwire.vpn.proxy
 
+import cc.dripwire.vpn.ConfigTranslator
 import org.yaml.snakeyaml.Yaml
 
 /**
