@@ -1,0 +1,90 @@
+name: Verify external backend contract
+
+# One-off / reusable check: confirms some externally-hosted backend (e.g. a
+# rebuild done elsewhere, like via Lovable) still answers the Android app's
+# two hardcoded endpoints with the exact contract documented in
+# backend/README.md. Run manually from the Actions tab with the backend's
+# base URL. Does not need admin credentials — it only exercises the
+# always-public, no-auth app-facing endpoints, using a key that doesn't
+# exist, which must yield {ok:false, error:"invalid_key"} either way.
+on:
+  workflow_dispatch:
+    inputs:
+      baseUrl:
+        description: "Backend base URL to test, e.g. https://readme-first-launchpad.lovable.app"
+        required: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Normalize base URL
+        id: base
+        run: |
+          url="${{ inputs.baseUrl }}"
+          url="${url%/}"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Root reachable
+        run: |
+          code=$(curl -s -o /tmp/root.html -w "%{http_code}" "${{ steps.base.outputs.url }}/")
+          echo "HTTP $code"
+          [ "$code" -lt 500 ] || { echo "root endpoint errored"; exit 1; }
+
+      - name: POST /api/v1/activate with a bogus key — must be {ok:false, error:invalid_key}, HTTP 200
+        run: |
+          set -euo pipefail
+          CODE=$(curl -s -o /tmp/activate.json -w "%{http_code}" -X POST \
+            "${{ steps.base.outputs.url }}/api/v1/activate" \
+            -H "Content-Type: application/json" \
+            -d '{"key":"RKX-00000-00000-00000","deviceId":"gh-verify-device","deviceName":"GH Actions Verifier"}')
+          echo "HTTP $CODE"
+          cat /tmp/activate.json
+          echo
+          [ "$CODE" = "200" ] || { echo "FAIL: expected HTTP 200, got $CODE"; exit 1; }
+          node -e "
+            const fs = require('fs');
+            const j = JSON.parse(fs.readFileSync('/tmp/activate.json', 'utf8'));
+            if (j.ok !== false) throw new Error('expected ok:false, got: ' + JSON.stringify(j));
+            if (j.error !== 'invalid_key') throw new Error('expected error:\"invalid_key\", got: ' + JSON.stringify(j));
+            console.log('activate contract OK');
+          "
+
+      - name: POST /api/v1/activate with missing fields — must not 500
+        run: |
+          set -euo pipefail
+          CODE=$(curl -s -o /tmp/activate_empty.json -w "%{http_code}" -X POST \
+            "${{ steps.base.outputs.url }}/api/v1/activate" \
+            -H "Content-Type: application/json" -d '{}')
+          echo "HTTP $CODE"
+          cat /tmp/activate_empty.json
+          echo
+          [ "$CODE" -lt 500 ] || { echo "FAIL: empty-body activate caused a server error"; exit 1; }
+          node -e "
+            const fs = require('fs');
+            const j = JSON.parse(fs.readFileSync('/tmp/activate_empty.json', 'utf8'));
+            if (j.ok !== false) throw new Error('expected ok:false, got: ' + JSON.stringify(j));
+            console.log('empty-body activate handled gracefully:', j.error);
+          "
+
+      - name: POST /api/v1/heartbeat with a bogus key — must be {ok:false}, HTTP 200
+        run: |
+          set -euo pipefail
+          CODE=$(curl -s -o /tmp/heartbeat.json -w "%{http_code}" -X POST \
+            "${{ steps.base.outputs.url }}/api/v1/heartbeat" \
+            -H "Content-Type: application/json" \
+            -d '{"key":"RKX-00000-00000-00000","deviceId":"gh-verify-device","pingMs":42}')
+          echo "HTTP $CODE"
+          cat /tmp/heartbeat.json
+          echo
+          [ "$CODE" = "200" ] || { echo "FAIL: expected HTTP 200, got $CODE"; exit 1; }
+          node -e "
+            const fs = require('fs');
+            const j = JSON.parse(fs.readFileSync('/tmp/heartbeat.json', 'utf8'));
+            if (j.ok !== false) throw new Error('expected ok:false, got: ' + JSON.stringify(j));
+            if (!j.error) throw new Error('expected an error code, got: ' + JSON.stringify(j));
+            console.log('heartbeat contract OK, error code:', j.error);
+          "
+
+      - name: Summary
+        run: echo "All reachable-and-shaped checks passed. This does NOT yet prove a *valid* key activates correctly — that needs a real key from the admin panel (see follow-up)."
