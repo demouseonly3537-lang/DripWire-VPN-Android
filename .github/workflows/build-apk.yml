@@ -128,7 +128,19 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon
+        env:
+          # The licensing backend's HTTPS base URL, baked into BuildConfig.BACKEND_BASE_URL
+          # (see app/build.gradle.kts). Set this as a repo/org "Variable" (Settings > Secrets
+          # and variables > Actions > Variables) once the backend is deployed somewhere real;
+          # until then the build.gradle.kts default placeholder is used, and the app will show
+          # a "could not reach the server" error for any key, which is expected and harmless.
+          BACKEND_BASE_URL: ${{ vars.BACKEND_BASE_URL }}
+        run: |
+          if [ -n "$BACKEND_BASE_URL" ]; then
+            ./gradlew assembleDebug --no-daemon "-PbackendBaseUrl=$BACKEND_BASE_URL"
+          else
+            ./gradlew assembleDebug --no-daemon
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

@@ -1,0 +1,137 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  workflow_dispatch: {}
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Sanity-check node:sqlite is available
+        run: node -e "require('node:sqlite'); console.log('node:sqlite OK on', process.version)"
+
+      - name: Start server directly (no Docker) and smoke-test the API
+        env:
+          ADMIN_USERNAME: ci-admin
+          ADMIN_PASSWORD: ci-password-not-real
+          JWT_SECRET: ci-only-secret-${{ github.run_id }}
+          PORT: "8787"
+        run: |
+          set -euo pipefail
+          node server.js &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+
+          for i in $(seq 1 20); do
+            if curl -sf http://127.0.0.1:8787/ -o /dev/null; then break; fi
+            if [ "$i" -eq 20 ]; then echo "server never came up"; exit 1; fi
+            sleep 0.5
+          done
+          echo "server is up"
+
+          # Admin login
+          TOKEN=$(curl -sf -X POST http://127.0.0.1:8787/api/admin/login \
+            -H "Content-Type: application/json" \
+            -d '{"username":"ci-admin","password":"ci-password-not-real"}' | \
+            node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const j=JSON.parse(d);if(!j.ok||!j.token)throw new Error('login failed: '+d);console.log(j.token)})")
+          echo "login OK"
+
+          # Wrong password must be rejected (401, invalid_credentials), not crash the server.
+          # (No -f here: this request is *expected* to return a non-2xx status, and -f would
+          # make curl discard the body we need to check.)
+          BAD_LOGIN_CODE=$(curl -s -o /tmp/bad_login.json -w "%{http_code}" -X POST http://127.0.0.1:8787/api/admin/login \
+            -H "Content-Type: application/json" \
+            -d '{"username":"ci-admin","password":"wrong"}')
+          [ "$BAD_LOGIN_CODE" = "401" ] || { echo "expected 401, got $BAD_LOGIN_CODE"; cat /tmp/bad_login.json; exit 1; }
+          grep -q invalid_credentials /tmp/bad_login.json
+          echo "bad-login rejection OK"
+
+          # Create a config
+          CONFIG_ID=$(curl -sf -X POST http://127.0.0.1:8787/api/admin/configs \
+            -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+            -d '{"name":"CI Test Server","configText":"{\"remarks\":\"ci\",\"inbounds\":[],\"outbounds\":[{\"protocol\":\"freedom\"}]}"}' | \
+            node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const j=JSON.parse(d);if(!j.ok)throw new Error('config create failed: '+d);console.log(j.id)})")
+          echo "config create OK (id=$CONFIG_ID)"
+
+          # Generate a key (1 hour, device limit 2)
+          KEY=$(curl -sf -X POST http://127.0.0.1:8787/api/admin/keys \
+            -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+            -d "{\"configId\":$CONFIG_ID,\"durationSeconds\":3600,\"deviceLimit\":2,\"quantity\":1,\"note\":\"ci\"}" | \
+            node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const j=JSON.parse(d);if(!j.ok)throw new Error('key create failed: '+d);console.log(j.created[0].keyCode)})")
+          echo "key generate OK ($KEY)"
+
+          # App-facing activate + heartbeat
+          curl -sf -X POST http://127.0.0.1:8787/api/v1/activate \
+            -H "Content-Type: application/json" \
+            -d "{\"key\":\"$KEY\",\"deviceId\":\"ci-device-1\",\"deviceName\":\"CI Runner\"}" | \
+            node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const j=JSON.parse(d);if(!j.ok||!j.config)throw new Error('activate failed: '+d)})"
+          echo "activate OK"
+
+          curl -sf -X POST http://127.0.0.1:8787/api/v1/heartbeat \
+            -H "Content-Type: application/json" \
+            -d "{\"key\":\"$KEY\",\"deviceId\":\"ci-device-1\",\"pingMs\":42}" | \
+            node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const j=JSON.parse(d);if(!j.ok)throw new Error('heartbeat failed: '+d)})"
+          echo "heartbeat OK"
+
+          # A bogus key must be rejected cleanly (no 500, no crash)
+          curl -sf -X POST http://127.0.0.1:8787/api/v1/activate \
+            -H "Content-Type: application/json" \
+            -d '{"key":"RKX-00000-00000-00000","deviceId":"ci-device-x","deviceName":"X"}' | \
+            node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const j=JSON.parse(d);if(j.ok||j.error!=='invalid_key')throw new Error('expected invalid_key: '+d)})"
+          echo "invalid-key rejection OK"
+
+          echo "ALL API SMOKE TESTS PASSED"
+
+      - name: Build Docker image
+        run: docker build -t rakshakx-backend:ci .
+
+      - name: Run Docker image and smoke-test it
+        run: |
+          set -euo pipefail
+          docker run -d --name rakshakx-ci \
+            -p 8788:8787 \
+            -e ADMIN_USERNAME=ci-admin \
+            -e ADMIN_PASSWORD=ci-password-not-real \
+            -e JWT_SECRET=ci-only-secret-${{ github.run_id }}-docker \
+            rakshakx-backend:ci
+
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8788/ -o /dev/null; then break; fi
+            if [ "$i" -eq 30 ]; then
+              echo "container never became healthy"
+              docker logs rakshakx-ci || true
+              exit 1
+            fi
+            sleep 1
+          done
+          echo "container responds on :8788"
+
+          curl -sf -X POST http://127.0.0.1:8788/api/admin/login \
+            -H "Content-Type: application/json" \
+            -d '{"username":"ci-admin","password":"ci-password-not-real"}' | \
+            node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const j=JSON.parse(d);if(!j.ok||!j.token)throw new Error('docker login failed: '+d)})"
+          echo "docker image login OK"
+
+      - name: Dump container logs (always, for debugging)
+        if: always()
+        run: docker logs rakshakx-ci || true
+
+      - name: Clean up container
+        if: always()
+        run: docker rm -f rakshakx-ci || true

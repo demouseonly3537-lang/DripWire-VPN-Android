@@ -15,7 +15,9 @@ object SingBoxStyleJsonParser {
             return buildHysteriaPlan(ob, remarks, socksPort)
         }
         val outbound = buildProxyOutbound(ob, type)
-        return TunnelPlan.ViaXray(remarks, socksPort, XrayConfigBuilder.build(outbound, socksPort))
+        return TunnelPlan.ViaXray(
+            remarks, socksPort, outbound.address, outbound.port, XrayConfigBuilder.build(outbound, socksPort),
+        )
     }
 
     private fun buildHysteriaPlan(ob: JSONObject, remarks: String, socksPort: Int): TunnelPlan.ViaHysteria {

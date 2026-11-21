@@ -1,0 +1,19 @@
+services:
+  rakshakx-backend:
+    build: .
+    image: rakshakx-backend
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    env_file:
+      # Not baked into the image or committed to git — copy .env.example to .env
+      # next to this file first. Compose reads it from the host and injects it
+      # into the container as environment variables.
+      - .env
+    volumes:
+      # Persists the SQLite database (keys, devices, configs, admin account)
+      # across container restarts/upgrades.
+      - rakshakx-data:/app/data
+
+volumes:
+  rakshakx-data:

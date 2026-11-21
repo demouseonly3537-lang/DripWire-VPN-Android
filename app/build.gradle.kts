@@ -18,6 +18,14 @@ android {
             // Keep APK size reasonable; drop abiFilters if you need x86 emulator support too.
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
         }
+
+        // The licensing backend's base URL — baked in at build time, never shown or editable
+        // in the app's UI (end users only ever see "paste your key"). Override it with
+        // -PbackendBaseUrl=https://your-backend.example (CI does this from a repo variable;
+        // see .github/workflows/build-apk.yml). Must be HTTPS: usesCleartextTraffic is false.
+        val backendBaseUrl = (project.findProperty("backendBaseUrl") as String?)
+            ?: "https://backend.rakshakx.example"
+        buildConfigField("String", "BACKEND_BASE_URL", "\"$backendBaseUrl\"")
     }
 
     buildTypes {
@@ -53,6 +61,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 

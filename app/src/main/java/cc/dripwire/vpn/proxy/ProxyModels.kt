@@ -61,15 +61,25 @@ sealed class TunnelPlan {
     abstract val remarks: String
     abstract val socksPort: Int
 
+    /** The real proxy server's address, so the UI can show a live ping to it (see
+     * DripwireVpnService's ping prober) without needing to know which engine is in use. */
+    abstract val remoteHost: String
+    abstract val remotePort: Int
+
     data class ViaHysteria(
         override val remarks: String,
         override val socksPort: Int,
         val outbound: HysteriaOutbound,
-    ) : TunnelPlan()
+    ) : TunnelPlan() {
+        override val remoteHost: String get() = outbound.serverAddress
+        override val remotePort: Int get() = outbound.serverPort
+    }
 
     data class ViaXray(
         override val remarks: String,
         override val socksPort: Int,
+        override val remoteHost: String,
+        override val remotePort: Int,
         val configJson: String,
     ) : TunnelPlan()
 }

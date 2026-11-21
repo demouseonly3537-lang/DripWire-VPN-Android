@@ -1,15 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">DripWire VPN</string>
-    <string name="hint_config">Paste a config here — JSON, Clash YAML, or a vmess:// / vless:// / trojan:// / ss:// / hysteria2:// link…</string>
+    <string name="app_name">RakshakX</string>
+
+    <!-- Key-entry screen -->
+    <string name="hint_key">Enter your RakshakX key</string>
+    <string name="key_format_hint">Format: RKX-XXXXX-XXXXX-XXXXX</string>
     <string name="btn_connect">Connect</string>
     <string name="btn_disconnect">Disconnect</string>
     <string name="status_idle">Not connected</string>
+    <string name="status_checking_key">Checking your key…</string>
     <string name="status_starting">Connecting…</string>
-    <string name="status_connected">Connected — %1$s</string>
-    <string name="status_error">Error: %1$s</string>
-    <string name="notif_channel_name">DripWire VPN</string>
-    <string name="notif_title">DripWire VPN is running</string>
+
+    <!-- Connected "SaaS" details card -->
+    <string name="label_status">Status</string>
+    <string name="label_device">Device</string>
+    <string name="label_time_remaining">Time remaining</string>
+    <string name="label_ping">Ping</string>
+    <string name="status_connected_badge">Connected</string>
+    <string name="ping_measuring">Measuring…</string>
+    <string name="ping_unavailable">Unavailable</string>
+    <string name="ping_value_ms">%1$d ms</string>
+    <string name="time_expired">Expired</string>
+
+    <!-- Errors shown in the banner — always plain-English, never a raw code or JSON -->
+    <string name="status_error">%1$s</string>
+    <string name="err_key_invalid">Invalid key. Please check it and try again.</string>
+    <string name="err_key_blocked">This key has been blocked. Contact your provider for help.</string>
+    <string name="err_key_expired">Your key has expired. Get a new key to reconnect.</string>
+    <string name="err_device_limit">This key is already active on the maximum number of devices allowed.</string>
+    <string name="err_device_removed">This device was disconnected by the admin.</string>
+    <string name="err_config_missing">No server is available for this key right now. Please contact your provider.</string>
+    <string name="err_rate_limited">Too many attempts. Please wait a moment and try again.</string>
+    <string name="err_missing_device_id">Could not identify this device. Please reinstall the app.</string>
+    <string name="err_unknown">Something went wrong (%1$s). Please try again.</string>
+    <string name="err_network">Could not reach the server. Check your internet connection and try again.</string>
+    <string name="err_tunnel_failed">Could not start the VPN: %1$s</string>
+    <string name="err_empty_key">Please enter your key.</string>
+
+    <string name="notif_channel_name">RakshakX VPN</string>
+    <string name="notif_title">RakshakX VPN is running</string>
     <string name="notif_text">Tunnel active</string>
-    <string name="error_bad_json">Could not use that config: %1$s</string>
 </resources>

@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RakshakX Admin</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="min-h-screen">
+
+<!-- ===================== LOGIN SCREEN ===================== -->
+<div id="loginScreen" class="min-h-screen flex items-center justify-center px-4">
+  <div class="card w-full max-w-sm p-8">
+    <div class="text-center mb-6">
+      <div class="text-2xl font-extrabold tracking-tight brand-gradient">RakshakX</div>
+      <div class="text-sm text-slate-400 mt-1">Admin Panel</div>
+    </div>
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label class="text-xs text-slate-400">Username</label>
+        <input id="loginUsername" class="input w-full px-3 py-2 mt-1" autocomplete="username" required />
+      </div>
+      <div>
+        <label class="text-xs text-slate-400">Password</label>
+        <input id="loginPassword" type="password" class="input w-full px-3 py-2 mt-1" autocomplete="current-password" required />
+      </div>
+      <div id="loginError" class="text-sm text-red-400 hidden"></div>
+      <button type="submit" id="loginSubmit" class="btn-primary w-full py-2.5">Sign in</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== APP SHELL ===================== -->
+<div id="appShell" class="hidden min-h-screen flex">
+  <!-- Sidebar -->
+  <aside class="w-60 shrink-0 border-r border-slate-800 p-5 hidden md:flex flex-col">
+    <div class="text-xl font-extrabold brand-gradient mb-8">RakshakX</div>
+    <nav class="space-y-1 flex-1">
+      <button data-tab="dashboard" class="nav-btn w-full text-left px-3 py-2 rounded-lg hover:bg-white/5">📊 Dashboard</button>
+      <button data-tab="keys" class="nav-btn w-full text-left px-3 py-2 rounded-lg hover:bg-white/5">🔑 Keys</button>
+      <button data-tab="configs" class="nav-btn w-full text-left px-3 py-2 rounded-lg hover:bg-white/5">⚙️ Configs</button>
+    </nav>
+    <button id="logoutBtn" class="btn-ghost w-full py-2 text-sm">Log out</button>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 min-w-0">
+    <!-- Mobile topbar -->
+    <div class="md:hidden flex items-center justify-between p-4 border-b border-slate-800">
+      <div class="font-extrabold brand-gradient">RakshakX</div>
+      <select id="mobileNav" class="input px-2 py-1 text-sm">
+        <option value="dashboard">Dashboard</option>
+        <option value="keys">Keys</option>
+        <option value="configs">Configs</option>
+      </select>
+    </div>
+
+    <div class="p-5 md:p-8 max-w-6xl mx-auto">
+
+      <!-- ---------- DASHBOARD TAB ---------- -->
+      <section id="tab-dashboard" class="tab-panel space-y-6">
+        <h1 class="text-xl font-bold">Dashboard</h1>
+        <div id="statCards" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
+      </section>
+
+      <!-- ---------- KEYS TAB ---------- -->
+      <section id="tab-keys" class="tab-panel hidden space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h1 class="text-xl font-bold">License Keys</h1>
+          <button id="openCreateKey" class="btn-primary px-4 py-2 text-sm">+ Generate Key</button>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <input id="keySearch" placeholder="Search key / note…" class="input px-3 py-2 text-sm flex-1 min-w-[200px]" />
+          <select id="keyStatusFilter" class="input px-3 py-2 text-sm">
+            <option value="">All statuses</option>
+            <option value="active">Active</option>
+            <option value="unused">Unused</option>
+            <option value="blocked">Blocked</option>
+            <option value="expired">Expired</option>
+          </select>
+        </div>
+
+        <div class="card overflow-x-auto scrollbar-thin">
+          <table id="keysTable">
+            <thead>
+              <tr>
+                <th>Key</th><th>Config</th><th>Status</th><th>Devices</th>
+                <th>Expires</th><th>Note</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="keysBody"></tbody>
+          </table>
+          <div id="keysEmpty" class="hidden text-center text-slate-500 py-10 text-sm">No keys yet.</div>
+        </div>
+      </section>
+
+      <!-- ---------- CONFIGS TAB ---------- -->
+      <section id="tab-configs" class="tab-panel hidden space-y-5">
+        <h1 class="text-xl font-bold">Proxy Configs</h1>
+        <p class="text-sm text-slate-400 -mt-3">
+          Paste a config here (anything the app understands: JSON, sing-box JSON, Clash YAML,
+          or a vmess:// / vless:// / trojan:// / ss:// / hysteria2:// link). Users never see this —
+          they only ever enter a key.
+        </p>
+
+        <div class="card p-5 space-y-3">
+          <input id="newConfigName" placeholder="Label, e.g. \"Mumbai Server 1\"" class="input w-full px-3 py-2 text-sm" />
+          <textarea id="newConfigText" placeholder="Paste config here…" rows="5" class="input w-full px-3 py-2 text-sm mono"></textarea>
+          <button id="addConfigBtn" class="btn-primary px-4 py-2 text-sm">Add Config</button>
+        </div>
+
+        <div class="card overflow-x-auto scrollbar-thin">
+          <table>
+            <thead><tr><th>Name</th><th>Size</th><th>Keys using it</th><th>Added</th><th></th></tr></thead>
+            <tbody id="configsBody"></tbody>
+          </table>
+          <div id="configsEmpty" class="hidden text-center text-slate-500 py-10 text-sm">No configs yet. Add one above.</div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ===================== CREATE KEY MODAL ===================== -->
+<div id="createKeyModal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50">
+  <div class="card w-full max-w-md p-6 max-h-[90vh] overflow-y-auto scrollbar-thin">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-bold text-lg">Generate Key</h2>
+      <button class="modal-close text-slate-400 hover:text-white" data-modal="createKeyModal">✕</button>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="text-xs text-slate-400">Config</label>
+        <select id="createKeyConfig" class="input w-full px-3 py-2 mt-1 text-sm"></select>
+      </div>
+      <div>
+        <label class="text-xs text-slate-400">Duration</label>
+        <div class="grid grid-cols-4 gap-2 mt-1" id="durationPresets">
+          <button data-secs="3600" class="duration-btn btn-ghost py-2 text-xs">1 Hour</button>
+          <button data-secs="86400" class="duration-btn btn-ghost py-2 text-xs">1 Day</button>
+          <button data-secs="604800" class="duration-btn btn-ghost py-2 text-xs">7 Days</button>
+          <button data-secs="2592000" class="duration-btn btn-ghost py-2 text-xs">30 Days</button>
+        </div>
+        <input id="customDurationSecs" type="number" min="1" placeholder="Custom duration in seconds" class="input w-full px-3 py-2 mt-2 text-sm" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-slate-400">Device limit</label>
+          <input id="createKeyDeviceLimit" type="number" min="1" value="1" class="input w-full px-3 py-2 mt-1 text-sm" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-400">Quantity</label>
+          <input id="createKeyQuantity" type="number" min="1" max="100" value="1" class="input w-full px-3 py-2 mt-1 text-sm" />
+        </div>
+      </div>
+      <div>
+        <label class="text-xs text-slate-400">Note (optional)</label>
+        <input id="createKeyNote" class="input w-full px-3 py-2 mt-1 text-sm" placeholder="e.g. customer name" />
+      </div>
+      <div id="createKeyError" class="text-sm text-red-400 hidden"></div>
+      <button id="submitCreateKey" class="btn-primary w-full py-2.5">Generate</button>
+
+      <div id="createKeyResult" class="hidden space-y-2 pt-3 border-t border-slate-800">
+        <div class="text-xs text-slate-400">Generated key(s):</div>
+        <div id="createKeyResultList" class="space-y-1 max-h-40 overflow-y-auto scrollbar-thin"></div>
+        <button id="copyAllKeys" class="btn-ghost w-full py-2 text-sm">Copy all</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== KEY DEVICES MODAL ===================== -->
+<div id="devicesModal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50">
+  <div class="card w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto scrollbar-thin">
+    <div class="flex items-center justify-between mb-1">
+      <h2 class="font-bold text-lg">Devices</h2>
+      <button class="modal-close text-slate-400 hover:text-white" data-modal="devicesModal">✕</button>
+    </div>
+    <div id="devicesModalKeyCode" class="text-xs text-slate-500 mono mb-4"></div>
+    <div id="devicesList" class="space-y-2"></div>
+  </div>
+</div>
+
+<!-- ===================== TOASTS ===================== -->
+<div id="toasts" class="fixed top-4 right-4 space-y-2 z-[100]"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>

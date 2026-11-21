@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- RakshakX brand palette, matched to the app icon: cyan/purple neon on near-black. -->
     <style name="Theme.DripWire" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#2E7D32</item>
-        <item name="colorPrimaryDark">#1B5E20</item>
-        <item name="colorAccent">#66BB6A</item>
-        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryDark</item>
+        <item name="colorPrimary">#22D3EE</item>
+        <item name="colorPrimaryDark">#0B1220</item>
+        <item name="colorAccent">#A855F7</item>
+        <item name="android:windowBackground">#0B1220</item>
+        <item name="android:statusBarColor" tools:targetApi="l">#0B1220</item>
     </style>
 </resources>

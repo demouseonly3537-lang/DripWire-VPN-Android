@@ -73,7 +73,9 @@ object ClashYamlParser {
                     ssMethod = (p["cipher"] as? String) ?: return null,
                     password = (p["password"] as? String) ?: return null,
                 )
-                TunnelPlan.ViaXray(name, socksPort, XrayConfigBuilder.build(outbound, socksPort))
+                TunnelPlan.ViaXray(
+                    name, socksPort, outbound.address, outbound.port, XrayConfigBuilder.build(outbound, socksPort),
+                )
             }
 
             "trojan" -> {
@@ -89,7 +91,9 @@ object ClashYamlParser {
                     wsPath = wsPath,
                     wsHost = wsHost,
                 )
-                TunnelPlan.ViaXray(name, socksPort, XrayConfigBuilder.build(outbound, socksPort))
+                TunnelPlan.ViaXray(
+                    name, socksPort, outbound.address, outbound.port, XrayConfigBuilder.build(outbound, socksPort),
+                )
             }
 
             "vless" -> {
@@ -106,7 +110,9 @@ object ClashYamlParser {
                     wsPath = wsPath,
                     wsHost = wsHost,
                 )
-                TunnelPlan.ViaXray(name, socksPort, XrayConfigBuilder.build(outbound, socksPort))
+                TunnelPlan.ViaXray(
+                    name, socksPort, outbound.address, outbound.port, XrayConfigBuilder.build(outbound, socksPort),
+                )
             }
 
             "vmess" -> {
@@ -124,7 +130,9 @@ object ClashYamlParser {
                     wsPath = wsPath,
                     wsHost = wsHost,
                 )
-                TunnelPlan.ViaXray(name, socksPort, XrayConfigBuilder.build(outbound, socksPort))
+                TunnelPlan.ViaXray(
+                    name, socksPort, outbound.address, outbound.port, XrayConfigBuilder.build(outbound, socksPort),
+                )
             }
 
             else -> null

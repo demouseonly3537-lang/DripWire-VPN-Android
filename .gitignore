@@ -12,3 +12,8 @@
 *.dex
 # Fetched/built by CI, never committed (native executables + JNI lib per ABI):
 app/src/main/jniLibs/
+
+# Backend: local secrets and runtime data, never committed.
+backend/.env
+backend/data/
+backend/node_modules/

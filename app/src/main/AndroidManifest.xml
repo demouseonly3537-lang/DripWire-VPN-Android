@@ -11,9 +11,9 @@
         android:name=".DripwireApp"
         android:allowBackup="false"
         android:extractNativeLibs="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Theme.DripWire"
         android:usesCleartextTraffic="false">
 

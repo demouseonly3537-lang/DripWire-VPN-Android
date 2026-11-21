@@ -179,7 +179,9 @@ object ShareLinkParser {
 
     private fun xrayPlan(remarks: String, outbound: ProxyOutbound): TunnelPlan.ViaXray {
         val port = ConfigTranslator.DEFAULT_SOCKS_PORT
-        return TunnelPlan.ViaXray(remarks, port, XrayConfigBuilder.build(outbound, port))
+        return TunnelPlan.ViaXray(
+            remarks, port, outbound.address, outbound.port, XrayConfigBuilder.build(outbound, port),
+        )
     }
 
     private fun parseQuery(q: String?): Map<String, String> {
