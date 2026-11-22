@@ -3,7 +3,11 @@ name: Build APK
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      backendBaseUrl:
+        description: "Override the licensing backend's HTTPS base URL for this build only (falls back to the repo's BACKEND_BASE_URL variable, then the build.gradle.kts default, when left blank)"
+        required: false
 
 env:
   HYSTERIA_VERSION: "app/v2.13.0"
@@ -130,11 +134,12 @@ jobs:
       - name: Build debug APK
         env:
           # The licensing backend's HTTPS base URL, baked into BuildConfig.BACKEND_BASE_URL
-          # (see app/build.gradle.kts). Set this as a repo/org "Variable" (Settings > Secrets
-          # and variables > Actions > Variables) once the backend is deployed somewhere real;
-          # until then the build.gradle.kts default placeholder is used, and the app will show
-          # a "could not reach the server" error for any key, which is expected and harmless.
-          BACKEND_BASE_URL: ${{ vars.BACKEND_BASE_URL }}
+          # (see app/build.gradle.kts). Precedence: a manual dispatch's "backendBaseUrl" input
+          # wins when given, otherwise the repo/org "Variable" named BACKEND_BASE_URL (Settings >
+          # Secrets and variables > Actions > Variables) is used, otherwise the build.gradle.kts
+          # default placeholder is used, and the app will show a "could not reach the server"
+          # error for any key, which is expected and harmless.
+          BACKEND_BASE_URL: ${{ inputs.backendBaseUrl || vars.BACKEND_BASE_URL }}
         run: |
           if [ -n "$BACKEND_BASE_URL" ]; then
             ./gradlew assembleDebug --no-daemon "-PbackendBaseUrl=$BACKEND_BASE_URL"
