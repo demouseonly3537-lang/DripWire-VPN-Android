@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -28,10 +30,40 @@ android {
         buildConfigField("String", "BACKEND_BASE_URL", "\"$backendBaseUrl\"")
     }
 
+    // Real release signing — reads from env vars so the actual keystore/passwords never sit in
+    // the repo. CI sources these from GitHub Actions secrets (see .github/workflows/build-apk.yml);
+    // locally, export the same four env vars before running ./gradlew assembleRelease.
+    // SIGNING_KEYSTORE_BASE64 is the keystore file, base64-encoded onto a single line.
+    val signingKeystoreBase64 = System.getenv("SIGNING_KEYSTORE_BASE64")
+    val hasReleaseSigning = !signingKeystoreBase64.isNullOrBlank()
+
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                val decodedKeystore = File(System.getProperty("java.io.tmpdir"), "rakshakx-release-${System.nanoTime()}.keystore")
+                decodedKeystore.writeBytes(Base64.getDecoder().decode(signingKeystoreBase64))
+                storeFile = decodedKeystore
+                storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+                keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+                keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            isDebuggable = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Falls back to debug signing when the real signing secrets aren't configured yet,
+            // so the build never breaks — but an APK built this way is NOT the one to hand out
+            // to real users; see README for how to wire up real signing.
+            signingConfig = if (hasReleaseSigning) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
         debug {
             isDebuggable = true

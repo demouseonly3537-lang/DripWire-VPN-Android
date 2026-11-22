@@ -147,8 +147,37 @@ jobs:
             ./gradlew assembleDebug --no-daemon
           fi
 
-      - name: Upload APK
+      - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: dripwire-vpn-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+
+      - name: Build release APK
+        env:
+          BACKEND_BASE_URL: ${{ inputs.backendBaseUrl || vars.BACKEND_BASE_URL }}
+          # Real production signing — only present once the four SIGNING_* repo secrets are
+          # added under Settings > Secrets and variables > Actions > Secrets (see README).
+          # Until then app/build.gradle.kts falls back to debug signing automatically, so this
+          # step still succeeds either way — it just won't be the APK to hand out to real users.
+          SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          if [ -n "$SIGNING_KEYSTORE_BASE64" ]; then
+            echo "Signing release APK with the real production keystore."
+          else
+            echo "No SIGNING_* secrets configured yet — release APK will be debug-signed (minified/optimized, but not the build to distribute). See README."
+          fi
+          if [ -n "$BACKEND_BASE_URL" ]; then
+            ./gradlew assembleRelease --no-daemon "-PbackendBaseUrl=$BACKEND_BASE_URL"
+          else
+            ./gradlew assembleRelease --no-daemon
+          fi
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: dripwire-vpn-release-apk
+          path: app/build/outputs/apk/release/*.apk

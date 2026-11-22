@@ -109,6 +109,51 @@ Without either, the app builds against a placeholder URL — it will show a
 "could not reach the server" error for any key, which is expected until a
 real backend is deployed and configured.
 
+## Signing a real release build (needed before handing the APK to real users)
+
+Every CI run now builds **two** APKs:
+
+- `dripwire-vpn-debug-apk` — unoptimized, debuggable. Fine for your own testing only.
+- `dripwire-vpn-release-apk` — minified/shrunk and non-debuggable. **This is the
+  one to distribute** — but only once it's signed with your own real keystore,
+  not the fallback below.
+
+Without a real signing key configured, the release build still succeeds (so CI
+never breaks), but it silently falls back to Android's auto-generated debug
+certificate — fine for a quick look, **not safe to give out to real users**:
+anyone can see it's debug-signed, Play Store will reject it, and most
+importantly you could never ship an *update* later, because Android refuses to
+install an upgrade signed with a different key than the one already installed.
+
+To set up real signing (one-time):
+
+1. Generate a keystore (needs a JDK; `keytool` ships with every JDK):
+   ```bash
+   keytool -genkeypair -v -keystore rakshakx-release.keystore -alias rakshakx \
+     -keyalg RSA -keysize 2048 -validity 10950
+   ```
+   Pick a strong store password when prompted (PKCS12 keystores, the default
+   since JDK 9, use the same password for the store and the key — just answer
+   the key-password prompt with the same value).
+2. **Back this file up somewhere safe outside the repo — a password manager,
+   encrypted cloud storage, wherever.** If you lose it, you can never publish
+   an update to users who already have the app installed; you'd have to ship
+   a brand new app under a new package name instead.
+3. Base64-encode it onto one line and add four **repository secrets**
+   (Settings → Secrets and variables → Actions → **Secrets** tab, not
+   Variables):
+   ```bash
+   base64 -w0 rakshakx-release.keystore   # paste the output as SIGNING_KEYSTORE_BASE64
+   ```
+   | Secret name | Value |
+   |---|---|
+   | `SIGNING_KEYSTORE_BASE64` | the base64 output above |
+   | `SIGNING_STORE_PASSWORD` | the store password you chose |
+   | `SIGNING_KEY_ALIAS` | `rakshakx` (or whatever `-alias` you used) |
+   | `SIGNING_KEY_PASSWORD` | the same password (PKCS12) |
+4. Re-run the "Build APK" workflow. Its log will say "Signing release APK
+   with the real production keystore" once it picks the secrets up.
+
 ## Why the build happens on GitHub, not on your machine
 
 Building this needs the Android SDK/NDK, a Go toolchain, and source/binaries
