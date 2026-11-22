@@ -79,4 +79,5 @@ jobs:
           echo "(Informational only — not failing the job either way; just shows whether device_limit is enforced for this key's configured limit.)"
 
       - name: Summary
-        run: echo "Real-key positive path verified: activate -> config issued, heartbeat -> accepted."
+        run: |
+          echo "Real-key positive path verified: activate -> config issued, heartbeat -> accepted."
