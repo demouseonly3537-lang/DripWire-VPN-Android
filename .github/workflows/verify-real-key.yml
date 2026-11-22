@@ -1,0 +1,82 @@
+name: Verify real key end-to-end (activate + heartbeat)
+
+# Tests the actual POSITIVE path against a real, admin-issued license key on
+# an externally-hosted backend: activate must succeed and return a config,
+# and a follow-up heartbeat on the same device must also succeed. This
+# consumes the key's "first activation" (the expiry clock starts here), so
+# only run it against a key you intend to spend as a test.
+on:
+  workflow_dispatch:
+    inputs:
+      baseUrl:
+        description: "Backend base URL, e.g. https://readme-first-launchpad.lovable.app"
+        required: true
+      key:
+        description: "Real license key to activate, e.g. RKX-XXXXX-XXXXX-XXXXX"
+        required: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Normalize base URL
+        id: base
+        run: |
+          url="${{ inputs.baseUrl }}"
+          url="${url%/}"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: POST /api/v1/activate with the real key — must be ok:true with a config
+        run: |
+          set -euo pipefail
+          CODE=$(curl -s -o /tmp/activate.json -w "%{http_code}" -X POST \
+            "${{ steps.base.outputs.url }}/api/v1/activate" \
+            -H "Content-Type: application/json" \
+            -d '{"key":"${{ inputs.key }}","deviceId":"gh-verify-real-device-1","deviceName":"GH Actions Real-Key Verifier"}')
+          echo "HTTP $CODE"
+          cat /tmp/activate.json
+          echo
+          [ "$CODE" = "200" ] || { echo "FAIL: expected HTTP 200, got $CODE"; exit 1; }
+          node -e "
+            const fs = require('fs');
+            const j = JSON.parse(fs.readFileSync('/tmp/activate.json', 'utf8'));
+            if (j.ok !== true) throw new Error('expected ok:true, got: ' + JSON.stringify(j));
+            if (!j.expiresAt) throw new Error('missing expiresAt: ' + JSON.stringify(j));
+            if (!j.serverTime) throw new Error('missing serverTime: ' + JSON.stringify(j));
+            if (typeof j.config !== 'string' || j.config.length === 0) throw new Error('missing/empty config: ' + JSON.stringify(j));
+            console.log('activate OK — expiresAt:', j.expiresAt, 'serverTime:', j.serverTime, 'deviceLabel:', j.deviceLabel, 'config length:', j.config.length);
+          "
+
+      - name: POST /api/v1/heartbeat with the same key/device — must be ok:true
+        run: |
+          set -euo pipefail
+          CODE=$(curl -s -o /tmp/heartbeat.json -w "%{http_code}" -X POST \
+            "${{ steps.base.outputs.url }}/api/v1/heartbeat" \
+            -H "Content-Type: application/json" \
+            -d '{"key":"${{ inputs.key }}","deviceId":"gh-verify-real-device-1","pingMs":37}')
+          echo "HTTP $CODE"
+          cat /tmp/heartbeat.json
+          echo
+          [ "$CODE" = "200" ] || { echo "FAIL: expected HTTP 200, got $CODE"; exit 1; }
+          node -e "
+            const fs = require('fs');
+            const j = JSON.parse(fs.readFileSync('/tmp/heartbeat.json', 'utf8'));
+            if (j.ok !== true) throw new Error('expected ok:true, got: ' + JSON.stringify(j));
+            if (!j.expiresAt) throw new Error('missing expiresAt: ' + JSON.stringify(j));
+            console.log('heartbeat OK — expiresAt:', j.expiresAt, 'serverTime:', j.serverTime);
+          "
+
+      - name: POST /api/v1/activate from a SECOND device — should respect device limit if set to 1
+        run: |
+          set -euo pipefail
+          CODE=$(curl -s -o /tmp/activate2.json -w "%{http_code}" -X POST \
+            "${{ steps.base.outputs.url }}/api/v1/activate" \
+            -H "Content-Type: application/json" \
+            -d '{"key":"${{ inputs.key }}","deviceId":"gh-verify-real-device-2","deviceName":"GH Actions Second Device"}')
+          echo "HTTP $CODE"
+          cat /tmp/activate2.json
+          echo
+          echo "(Informational only — not failing the job either way; just shows whether device_limit is enforced for this key's configured limit.)"
+
+      - name: Summary
+        run: echo "Real-key positive path verified: activate -> config issued, heartbeat -> accepted."
