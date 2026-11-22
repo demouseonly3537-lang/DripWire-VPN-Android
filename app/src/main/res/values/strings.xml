@@ -1,26 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">RakshakX</string>
+    <string name="app_tagline">Free Fire Antiban Panel</string>
 
     <!-- Key-entry screen -->
-    <string name="hint_key">Enter your RakshakX key</string>
+    <string name="label_enter_key_prompt">ENTER YOUR KEY TO CONTINUE</string>
+    <string name="hint_key">Enter Key Here…</string>
     <string name="key_format_hint">Format: RKX-XXXXX-XXXXX-XXXXX</string>
-    <string name="btn_connect">Connect</string>
+    <string name="btn_submit_key">Submit Key »</string>
+    <string name="btn_connect">Connect »</string>
     <string name="btn_disconnect">Disconnect</string>
-    <string name="status_idle">Not connected</string>
+    <string name="status_idle"></string>
     <string name="status_checking_key">Checking your key…</string>
     <string name="status_starting">Connecting…</string>
 
-    <!-- Connected "SaaS" details card -->
+    <!-- Connected / activated "SaaS" details card -->
     <string name="label_status">Status</string>
     <string name="label_device">Device</string>
-    <string name="label_time_remaining">Time remaining</string>
-    <string name="label_ping">Ping</string>
-    <string name="status_connected_badge">Connected</string>
+    <string name="label_time_remaining">Key Expiry</string>
+    <string name="label_ping">Live Ping</string>
+    <string name="status_activated_title">Key Activated!</string>
+    <string name="status_activated_subtitle">Enjoy Premium Access 👑</string>
+    <string name="status_connected_title">Protected &amp; Connected</string>
+    <string name="status_connected_subtitle">Your tunnel is live</string>
+    <string name="status_pill_activated">Your key is valid • Ready to connect</string>
+    <string name="status_pill_connected">Protected • Tunnel active</string>
     <string name="ping_measuring">Measuring…</string>
     <string name="ping_unavailable">Unavailable</string>
     <string name="ping_value_ms">%1$d ms</string>
     <string name="time_expired">Expired</string>
+
+    <!-- Bottom navigation (Home is this screen; the others are placeholders for now) -->
+    <string name="nav_home">Home</string>
+    <string name="nav_stats">Stats</string>
+    <string name="nav_support">Support</string>
+    <string name="toast_coming_soon">Coming soon</string>
+
+    <!-- Accessibility labels for the icon-only header/nav buttons -->
+    <string name="cd_menu">Menu</string>
+    <string name="cd_notifications">Notifications</string>
+    <string name="cd_settings">Settings</string>
+    <string name="cd_toggle_key_visibility">Show or hide key</string>
+    <string name="cd_logo">RakshakX logo</string>
+
+    <!-- Simple glyph icons used in place of custom vector art -->
+    <string name="glyph_menu">☰</string>
+    <string name="glyph_bell">🔔</string>
+    <string name="glyph_gear">⚙</string>
+    <string name="glyph_home">🏠</string>
+    <string name="glyph_stats">📊</string>
+    <string name="glyph_support">🎧</string>
+    <string name="glyph_key">🔑</string>
+    <string name="glyph_eye">👁</string>
+    <string name="glyph_eye_off">🙈</string>
+    <string name="glyph_clock">⏱</string>
+    <string name="glyph_signal">📶</string>
+    <string name="glyph_device">📱</string>
+    <string name="glyph_check">✓</string>
 
     <!-- Errors shown in the banner — always plain-English, never a raw code or JSON -->
     <string name="status_error">%1$s</string>
@@ -36,6 +72,7 @@
     <string name="err_network">Could not reach the server. Check your internet connection and try again.</string>
     <string name="err_tunnel_failed">Could not start the VPN: %1$s</string>
     <string name="err_empty_key">Please enter your key.</string>
+    <string name="err_vpn_permission_denied">VPN permission is needed to connect. Please allow it and tap Connect again.</string>
 
     <string name="notif_channel_name">RakshakX VPN</string>
     <string name="notif_title">RakshakX VPN is running</string>

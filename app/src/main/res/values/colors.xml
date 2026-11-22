@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- RakshakX neon palette — dark cyberpunk background with cyan/purple/magenta accents,
+         matched to the app's launcher icon and the "Free Fire Antiban Panel" brand screens. -->
+    <color name="bg_top">#140B2E</color>
+    <color name="bg_mid">#0A0718</color>
+    <color name="bg_bottom">#050410</color>
+
+    <color name="neon_cyan">#22D3EE</color>
+    <color name="neon_blue">#3B82F6</color>
+    <color name="neon_purple">#A855F7</color>
+    <color name="neon_magenta">#E879F9</color>
+    <color name="neon_green">#4ADE80</color>
+    <color name="neon_green_dim">#16A34A</color>
+    <color name="neon_red">#F87171</color>
+    <color name="neon_red_dim">#DC2626</color>
+
+    <color name="text_primary">#F5F5FF</color>
+    <color name="text_secondary">#9CA3D4</color>
+    <color name="text_muted">#6B7299</color>
+
+    <color name="card_fill">#15112C</color>
+    <color name="card_fill_dim">#100D24</color>
+    <color name="divider">#2A2854</color>
+
+    <color name="error_bg">#2A1116</color>
+    <color name="success_bg">#0C2416</color>
+</resources>

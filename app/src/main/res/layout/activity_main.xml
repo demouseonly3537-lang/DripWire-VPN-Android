@@ -4,221 +4,541 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="20dp">
+    android:background="@drawable/bg_root_gradient"
+    android:fitsSystemWindows="true">
 
-    <TextView
-        android:id="@+id/titleText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/app_name"
-        android:textColor="#FFFFFF"
-        android:textSize="26sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/statusText"
+    <!-- ===== Scrollable content: header, error banner, key entry OR connected card ===== -->
+    <ScrollView
+        android:id="@+id/contentScroll"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="@string/status_idle"
-        android:textColor="#8B95A7"
-        android:textSize="14sp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toTopOf="@id/connectButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/titleText" />
-
-    <!-- Error banner — hidden unless there is something to show. Never shows raw JSON/codes,
-         only the plain-English messages MainActivity/DripwireVpnService produce. -->
-    <TextView
-        android:id="@+id/errorBanner"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:background="#2A1116"
-        android:padding="14dp"
-        android:textColor="#F87171"
-        android:textSize="14sp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/statusText"
-        tools:text="Invalid key. Please check it and try again."
-        tools:visibility="visible" />
-
-    <!-- ===== Idle / entry state: just a key field ===== -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/keyInputLayout"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/errorBanner">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/keyInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="monospace"
-            android:hint="@string/hint_key"
-            android:inputType="textCapCharacters|textNoSuggestions"
-            android:textSize="16sp" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <TextView
-        android:id="@+id/keyFormatHint"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:text="@string/key_format_hint"
-        android:textColor="#8B95A7"
-        android:textSize="12sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/keyInputLayout" />
-
-    <!-- ===== Connected state: the "SaaS" details card. Device / time remaining / ping only —
-         never the raw server config, address, or protocol. ===== -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/connectedCard"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:visibility="gone"
-        app:cardBackgroundColor="#111827"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="0dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/errorBanner"
-        app:strokeColor="#1F2937"
-        app:strokeWidth="1dp"
-        tools:visibility="visible">
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="12dp">
 
-            <LinearLayout
+            <!-- ===== Header: hero art behind a menu/notification/settings row and the title ===== -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="190dp">
+
+                <ImageView
+                    android:id="@+id/heroImage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="end|top"
+                    android:adjustViewBounds="true"
+                    android:contentDescription="@null"
+                    android:scaleType="fitEnd"
+                    android:src="@drawable/img_hero_rx" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <TextView
+                        android:id="@+id/menuButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_icon_circle_purple"
+                        android:contentDescription="@string/cd_menu"
+                        android:gravity="center"
+                        android:text="@string/glyph_menu"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/bellButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_icon_circle_purple"
+                        android:contentDescription="@string/cd_notifications"
+                        android:gravity="center"
+                        android:text="@string/glyph_bell"
+                        android:textSize="16sp"
+                        app:layout_constraintEnd_toStartOf="@id/gearButton"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/gearButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="10dp"
+                        android:background="@drawable/bg_icon_circle_cyan"
+                        android:contentDescription="@string/cd_settings"
+                        android:gravity="center"
+                        android:text="@string/glyph_gear"
+                        android:textSize="16sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <ImageView
+                        android:id="@+id/logoImage"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="14dp"
+                        android:contentDescription="@string/cd_logo"
+                        android:src="@mipmap/ic_launcher"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/menuButton" />
+
+                    <TextView
+                        android:id="@+id/titleText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="sans-serif-black"
+                        android:text="@string/app_name"
+                        android:textColor="@color/text_primary"
+                        android:textSize="28sp"
+                        android:textStyle="bold"
+                        app:layout_constraintStart_toStartOf="@id/logoImage"
+                        app:layout_constraintTop_toBottomOf="@id/logoImage" />
+
+                    <TextView
+                        android:id="@+id/taglineText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/app_tagline"
+                        android:textColor="@color/neon_purple"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        app:layout_constraintStart_toStartOf="@id/logoImage"
+                        app:layout_constraintTop_toBottomOf="@id/titleText" />
+
+                    <TextView
+                        android:id="@+id/statusText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/status_idle"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"
+                        app:layout_constraintStart_toStartOf="@id/logoImage"
+                        app:layout_constraintTop_toBottomOf="@id/taglineText"
+                        tools:text="Connecting…" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </FrameLayout>
+
+            <!-- Error banner — hidden unless there is something to show. Never shows raw JSON/codes,
+                 only the plain-English messages MainActivity/DripwireVpnService produce. -->
+            <TextView
+                android:id="@+id/errorBanner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@color/error_bg"
+                android:padding="14dp"
+                android:textColor="@color/neon_red"
+                android:textSize="14sp"
+                android:visibility="gone"
+                tools:text="Invalid key. Please check it and try again."
+                tools:visibility="visible" />
+
+            <!-- ===== Idle / entry state: pill-shaped key field ===== -->
+            <TextView
+                android:id="@+id/enterKeyPromptText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:letterSpacing="0.08"
+                android:text="@string/label_enter_key_prompt"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/keyInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_key_field"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:text="@string/glyph_key"
+                    android:textSize="18sp" />
+
+                <EditText
+                    android:id="@+id/keyInput"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:fontFamily="monospace"
+                    android:hint="@string/hint_key"
+                    android:inputType="textCapCharacters|textNoSuggestions"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_muted"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/keyVisibilityToggle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:contentDescription="@string/cd_toggle_key_visibility"
+                    android:padding="4dp"
+                    android:text="@string/glyph_eye"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/keyFormatHint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="8dp"
+                android:text="@string/key_format_hint"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp" />
+
+            <!-- ===== Activated / connected state: the "SaaS" details card. Device / key expiry /
+                 ping only — never the raw server config, address, or protocol. ===== -->
+            <LinearLayout
+                android:id="@+id/connectedCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_card_outline"
+                android:orientation="vertical"
+                android:padding="20dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <!-- Success banner -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <FrameLayout
+                        android:layout_width="52dp"
+                        android:layout_height="52dp">
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_check_circle" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="@string/glyph_check"
+                            android:textColor="@color/neon_green"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/activatedHeadlineText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/status_activated_title"
+                            android:textColor="@color/neon_green"
+                            android:textSize="19sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/activatedSubtitleText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/status_activated_subtitle"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </LinearLayout>
 
                 <View
-                    android:id="@+id/statusDot"
-                    android:layout_width="10dp"
-                    android:layout_height="10dp"
-                    android:background="@drawable/dot_status" />
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="18dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@color/divider" />
 
-                <TextView
-                    android:id="@+id/statusBadgeText"
-                    android:layout_width="0dp"
+                <!-- Key expiry | Device -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:text="@string/status_connected_badge"
-                    android:textColor="#4ADE80"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                    android:orientation="horizontal">
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="14dp"
-                android:background="#1F2937" />
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-            <!-- Device -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/glyph_clock" />
 
-                <TextView
-                    android:layout_width="0dp"
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/label_time_remaining"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/timeRemainingValueText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="monospace"
+                            android:textColor="@color/neon_cyan"
+                            android:textSize="17sp"
+                            android:textStyle="bold"
+                            tools:text="23h 59m" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@color/divider" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/glyph_device" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/label_device"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/deviceValueText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:maxLines="1"
+                            android:ellipsize="end"
+                            android:textColor="@color/neon_magenta"
+                            android:textSize="17sp"
+                            android:textStyle="bold"
+                            tools:text="Pixel 7" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Live ping — only meaningful once the tunnel is actually up -->
+                <LinearLayout
+                    android:id="@+id/pingRow"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/label_device"
-                    android:textColor="#8B95A7"
-                    android:textSize="14sp" />
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_chip"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp"
+                    android:visibility="gone"
+                    tools:visibility="visible">
 
-                <TextView
-                    android:id="@+id/deviceValueText"
-                    android:layout_width="wrap_content"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:text="@string/glyph_signal" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/label_ping"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/pingValueText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/neon_cyan"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        tools:text="42 ms" />
+                </LinearLayout>
+
+                <!-- Status pill -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="#E5E7EB"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    tools:text="Pixel 7" />
-            </LinearLayout>
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_pill_green"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp">
 
-            <!-- Time remaining -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:orientation="horizontal">
+                    <View
+                        android:id="@+id/statusDot"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:background="@drawable/dot_status" />
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/label_time_remaining"
-                    android:textColor="#8B95A7"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:id="@+id/timeRemainingValueText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="monospace"
-                    android:textColor="#E5E7EB"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    tools:text="23h 59m" />
-            </LinearLayout>
-
-            <!-- Ping -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/label_ping"
-                    android:textColor="#8B95A7"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:id="@+id/pingValueText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="#22D3EE"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    tools:text="42 ms" />
+                    <TextView
+                        android:id="@+id/statusBadgeText"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:textColor="@color/neon_green"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        tools:text="Your key is valid • Ready to connect" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </ScrollView>
 
-    <com.google.android.material.button.MaterialButton
+    <!-- ===== Primary action button — always visible, never requires scrolling ===== -->
+    <Button
         android:id="@+id/connectButton"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp"
-        android:text="@string/btn_connect"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_height="56dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="14dp"
+        android:background="@drawable/bg_button_connect"
+        android:letterSpacing="0.04"
+        android:text="@string/btn_submit_key"
+        android:textAllCaps="true"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- ===== Bottom navigation — Home is this screen; Stats/Support are placeholders ===== -->
+    <LinearLayout
+        android:id="@+id/bottomNav"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_bottom_nav"
+        android:orientation="horizontal"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:id="@+id/navHome"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/glyph_home"
+                android:textSize="18sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/nav_home"
+                android:textColor="@color/neon_cyan"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/navStats"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/glyph_stats"
+                android:textSize="18sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/nav_stats"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/navSupport"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/glyph_support"
+                android:textSize="18sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/nav_support"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
