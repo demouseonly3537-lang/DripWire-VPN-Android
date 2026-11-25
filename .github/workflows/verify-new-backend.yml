@@ -1,0 +1,59 @@
+name: Verify new backend (health + public endpoints)
+
+# Non-destructive sanity check for a freshly deployed backend: confirms it's
+# reachable at all, and reports what the new v2 endpoints (plans, channel
+# links, a bogus-key activate for contract shape) currently return. Doesn't
+# consume any real license key.
+on:
+  workflow_dispatch:
+    inputs:
+      baseUrl:
+        description: "Backend base URL, e.g. https://rakshak-signal-command.lovable.app"
+        required: true
+        default: "https://rakshak-signal-command.lovable.app"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Normalize base URL
+        id: base
+        run: |
+          url="${{ inputs.baseUrl }}"
+          url="${url%/}"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: GET /api/health
+        run: |
+          CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" "${{ steps.base.outputs.url }}/api/health" || true)
+          echo "HTTP $CODE"
+          cat /tmp/health.json 2>/dev/null || echo "(no body)"
+          echo
+
+      - name: POST /api/v1/activate with a bogus key — contract shape check
+        run: |
+          CODE=$(curl -s -o /tmp/activate.json -w "%{http_code}" -X POST \
+            "${{ steps.base.outputs.url }}/api/v1/activate" \
+            -H "Content-Type: application/json" \
+            -d '{"key":"RKX-BOGUS-00000-00000","deviceId":"gh-verify-new-backend","deviceName":"GH Actions Verifier"}')
+          echo "HTTP $CODE"
+          cat /tmp/activate.json
+          echo
+          [ "$CODE" = "200" ] || { echo "WARNING: expected HTTP 200 for a logical failure, got $CODE"; }
+
+      - name: GET /api/v1/plans
+        run: |
+          CODE=$(curl -s -o /tmp/plans.json -w "%{http_code}" "${{ steps.base.outputs.url }}/api/v1/plans")
+          echo "HTTP $CODE"
+          cat /tmp/plans.json
+          echo
+
+      - name: GET /api/v1/channel-links
+        run: |
+          CODE=$(curl -s -o /tmp/links.json -w "%{http_code}" "${{ steps.base.outputs.url }}/api/v1/channel-links")
+          echo "HTTP $CODE"
+          cat /tmp/links.json
+          echo
+
+      - name: Summary
+        run: echo "Sanity check complete — see each step's output above for what the backend actually returned."
