@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.dripwire.vpn.R
 import cc.dripwire.vpn.api.AppApiClient
+import cc.dripwire.vpn.api.optStringOrNull
 import cc.dripwire.vpn.databinding.ActivityMessagesBinding
 import cc.dripwire.vpn.license.DeviceIdentity
 import kotlin.concurrent.thread
@@ -60,8 +61,8 @@ class MessagesActivity : AppCompatActivity() {
                 messages.add(
                     AppMessage(
                         id = m.optLong("id"),
-                        body = m.optString("body"),
-                        createdAt = m.optString("createdAt"),
+                        body = m.optStringOrNull("body") ?: "",
+                        createdAt = m.optStringOrNull("createdAt") ?: "",
                         read = m.optBoolean("read", false),
                     ),
                 )

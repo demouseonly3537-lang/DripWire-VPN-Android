@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import cc.dripwire.vpn.MainActivity
 import cc.dripwire.vpn.R
 import cc.dripwire.vpn.api.AppApiClient
+import cc.dripwire.vpn.api.optStringOrNull
 import cc.dripwire.vpn.databinding.ActivityChannelGateBinding
 import kotlin.concurrent.thread
 
@@ -49,14 +50,14 @@ class ChannelGateActivity : AppCompatActivity() {
                 if (!json.optBoolean("ok")) {
                     null to null
                 } else {
-                    json.optString("telegram").trim() to json.optString("whatsapp").trim()
+                    json.optStringOrNull("telegram") to json.optStringOrNull("whatsapp")
                 }
             }
             is AppApiClient.ApiResult.NetworkError -> null to null
         }
 
-        telegramLink = telegram?.takeIf { it.isNotBlank() }
-        whatsappLink = whatsapp?.takeIf { it.isNotBlank() }
+        telegramLink = telegram?.trim()?.takeIf { it.isNotBlank() }
+        whatsappLink = whatsapp?.trim()?.takeIf { it.isNotBlank() }
 
         if (telegramLink == null && whatsappLink == null) {
             // Nothing configured (or couldn't fetch) — don't block the user on an empty prompt.

@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.dripwire.vpn.R
 import cc.dripwire.vpn.api.AppApiClient
+import cc.dripwire.vpn.api.optStringOrNull
 import cc.dripwire.vpn.databinding.ActivityBuyKeyBinding
 import cc.dripwire.vpn.license.DeviceIdentity
 import cc.dripwire.vpn.license.LicenseClient
@@ -105,7 +106,7 @@ class BuyKeyActivity : AppCompatActivity() {
                 plans.add(
                     Plan(
                         id = p.optLong("id"),
-                        name = p.optString("name", "Plan"),
+                        name = p.optStringOrNull("name") ?: "Plan",
                         priceInr = p.optDouble("priceInr", 0.0),
                     ),
                 )
@@ -173,13 +174,13 @@ class BuyKeyActivity : AppCompatActivity() {
         val amountPaise = order.optLong("amountPaise", 0L)
         binding.amountText.text = formatPaiseAsRupees(amountPaise)
 
-        val qrSvg = order.optString("qrSvg")
-        if (qrSvg.isNotBlank()) {
+        val qrSvg = order.optStringOrNull("qrSvg")
+        if (!qrSvg.isNullOrBlank()) {
             val html = "<html><body style=\"margin:0;padding:0;\">$qrSvg</body></html>"
             binding.qrWebView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
         }
 
-        upiPayLink = order.optString("upiLink").takeIf { it.isNotBlank() }
+        upiPayLink = order.optStringOrNull("upiLink")
         binding.orderStatusSection.visibility = View.GONE
 
         startPolling()

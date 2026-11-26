@@ -216,7 +216,7 @@
                 android:textSize="12sp" />
 
             <!-- Self-serve key purchase — only relevant while there's no active key. -->
-            <Button
+            <android.widget.Button
                 android:id="@+id/buyKeyButton"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
@@ -450,7 +450,7 @@
     </ScrollView>
 
     <!-- ===== Primary action button — always visible, never requires scrolling ===== -->
-    <Button
+    <android.widget.Button
         android:id="@+id/connectButton"
         android:layout_width="0dp"
         android:layout_height="56dp"

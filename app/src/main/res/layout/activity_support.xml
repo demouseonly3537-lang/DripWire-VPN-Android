@@ -99,7 +99,7 @@
             android:textColorHint="@color/text_muted"
             android:textSize="14sp" />
 
-        <Button
+        <android.widget.Button
             android:id="@+id/sendButton"
             android:layout_width="wrap_content"
             android:layout_height="40dp"

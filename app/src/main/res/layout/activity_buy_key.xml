@@ -159,7 +159,7 @@
                     android:layout_marginTop="16dp"
                     android:background="@color/text_primary" />
 
-                <Button
+                <android.widget.Button
                     android:id="@+id/payWithUpiButton"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
@@ -208,7 +208,7 @@
                     android:textSize="15sp" />
             </LinearLayout>
 
-            <Button
+            <android.widget.Button
                 android:id="@+id/submitUtrButton"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"

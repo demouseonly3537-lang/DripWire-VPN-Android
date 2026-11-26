@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import cc.dripwire.vpn.R
 import cc.dripwire.vpn.api.AppApiClient
+import cc.dripwire.vpn.api.optStringOrNull
 import cc.dripwire.vpn.databinding.ActivitySupportBinding
 import cc.dripwire.vpn.license.DeviceIdentity
 import kotlin.concurrent.thread
@@ -115,10 +116,10 @@ class SupportActivity : AppCompatActivity() {
             list.add(
                 SupportMessage(
                     id = m.optLong("id"),
-                    sender = m.optString("sender", "admin"),
-                    body = m.optString("body").takeIf { it.isNotBlank() },
-                    imageUrl = m.optString("imageUrl").takeIf { it.isNotBlank() },
-                    createdAt = m.optString("createdAt"),
+                    sender = m.optStringOrNull("sender") ?: "admin",
+                    body = m.optStringOrNull("body"),
+                    imageUrl = m.optStringOrNull("imageUrl"),
+                    createdAt = m.optStringOrNull("createdAt") ?: "",
                 ),
             )
         }

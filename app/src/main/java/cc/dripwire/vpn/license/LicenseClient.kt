@@ -1,6 +1,7 @@
 package cc.dripwire.vpn.license
 
 import cc.dripwire.vpn.BuildConfig
+import cc.dripwire.vpn.api.optStringOrNull
 import org.json.JSONObject
 import java.io.IOException
 import java.io.OutputStreamWriter
@@ -62,10 +63,13 @@ object LicenseClient {
                     config = json.getString("config"),
                     expiresAt = json.optLong("expiresAt", -1L).takeIf { it >= 0 },
                     serverTime = json.optLong("serverTime", System.currentTimeMillis()),
-                    deviceLabel = json.optString("deviceLabel", deviceName),
+                    // NOTE: plain `optString("deviceLabel", deviceName)` would silently return
+                    // the literal string "null" (not fall back to deviceName) if the backend
+                    // ever sends an explicit JSON null here — see optStringOrNull's doc comment.
+                    deviceLabel = json.optStringOrNull("deviceLabel") ?: deviceName,
                 )
             } else {
-                ActivateResult.Failure(json.optString("error", "unknown_error"))
+                ActivateResult.Failure(json.optStringOrNull("error") ?: "unknown_error")
             }
         } catch (e: IOException) {
             ActivateResult.NetworkError(e.message ?: "network error")
@@ -88,7 +92,7 @@ object LicenseClient {
                     serverTime = json.optLong("serverTime", System.currentTimeMillis()),
                 )
             } else {
-                HeartbeatResult.Failure(json.optString("error", "unknown_error"))
+                HeartbeatResult.Failure(json.optStringOrNull("error") ?: "unknown_error")
             }
         } catch (e: IOException) {
             HeartbeatResult.NetworkError(e.message ?: "network error")

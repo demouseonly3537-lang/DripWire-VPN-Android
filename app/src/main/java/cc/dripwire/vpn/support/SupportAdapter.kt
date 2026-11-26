@@ -1,10 +1,15 @@
 package cc.dripwire.vpn.support
 
+import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
 import cc.dripwire.vpn.databinding.ItemSupportBubbleAdminBinding
 import cc.dripwire.vpn.databinding.ItemSupportBubbleUserBinding
 import cc.dripwire.vpn.messages.formatIsoTimestamp
@@ -49,7 +54,33 @@ class SupportAdapter(private val messages: MutableList<SupportMessage>) :
             imageView.visibility = View.GONE
         } else {
             imageView.visibility = View.VISIBLE
-            Glide.with(imageView).load(message.imageUrl).into(imageView)
+            // The signed image URL can expire or fail to load — collapse the reserved space
+            // instead of leaving a blank box if that happens.
+            Glide.with(imageView)
+                .load(message.imageUrl)
+                .listener(object : RequestListener<Drawable> {
+                    override fun onLoadFailed(
+                        e: GlideException?,
+                        model: Any?,
+                        target: Target<Drawable>,
+                        isFirstResource: Boolean,
+                    ): Boolean {
+                        imageView.visibility = View.GONE
+                        return false
+                    }
+
+                    override fun onResourceReady(
+                        resource: Drawable,
+                        model: Any,
+                        target: Target<Drawable>?,
+                        dataSource: DataSource,
+                        isFirstResource: Boolean,
+                    ): Boolean {
+                        imageView.visibility = View.VISIBLE
+                        return false
+                    }
+                })
+                .into(imageView)
         }
 
         timeView.text = formatIsoTimestamp(message.createdAt).substringAfter(' ').ifBlank { message.createdAt }
