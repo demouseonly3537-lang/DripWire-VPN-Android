@@ -21,5 +21,12 @@ class DripwireApp : Application() {
     companion object {
         const val NOTIF_CHANNEL_ID = "dripwire_vpn"
         const val NOTIF_ID = 1
+
+        // In-memory only (not persisted) — the Telegram/WhatsApp channel-join gate is shown
+        // once per app process, not on every MainActivity recreation (e.g. a screen rotation),
+        // but it comes back after the app is fully closed and reopened, matching "when the app
+        // opens" from the spec without being naggy on every configuration change.
+        @Volatile
+        var channelGatePassed: Boolean = false
     }
 }

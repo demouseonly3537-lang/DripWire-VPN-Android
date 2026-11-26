@@ -77,4 +77,54 @@
     <string name="notif_channel_name">RakshakX VPN</string>
     <string name="notif_title">RakshakX VPN is running</string>
     <string name="notif_text">Tunnel active</string>
+
+    <!-- ===== Channel join gate (shown before the key-entry screen) ===== -->
+    <string name="channel_gate_title">Join Our Channels</string>
+    <string name="channel_gate_subtitle">Stay updated with the latest news, keys and offers</string>
+    <string name="btn_join_telegram">Join Telegram »</string>
+    <string name="btn_join_whatsapp">Join WhatsApp »</string>
+    <string name="btn_continue">Continue »</string>
+    <string name="err_no_app_for_link">No app found to open this link.</string>
+
+    <!-- ===== Messages inbox ===== -->
+    <string name="messages_title">Messages</string>
+    <string name="messages_empty">No messages yet.</string>
+    <string name="messages_empty_no_key">Activate a key first to receive messages.</string>
+    <string name="messages_loading">Loading messages…</string>
+
+    <!-- ===== Support chat ===== -->
+    <string name="support_title">Support</string>
+    <string name="support_hint">Type a message…</string>
+    <string name="support_empty_no_key">Activate a key first to chat with support.</string>
+    <string name="support_send">Send</string>
+    <string name="cd_attach_photo">Attach a photo</string>
+    <string name="cd_support_photo">Photo</string>
+    <string name="err_image_too_large">That photo is too large. Please try a smaller one.</string>
+    <string name="err_image_invalid">Could not read that photo. Please try another one.</string>
+    <string name="err_message_empty">Please type a message or attach a photo.</string>
+
+    <!-- ===== Buy Key (UPI) ===== -->
+    <string name="btn_buy_key">Buy Key »</string>
+    <string name="buy_key_title">Buy Key</string>
+    <string name="buy_key_subtitle">Choose a plan to get a new key instantly</string>
+    <string name="buy_key_unavailable">Buy Key is not available right now. Please try again later.</string>
+    <string name="buy_key_loading">Loading plans…</string>
+    <string name="order_pay_title">Scan to Pay</string>
+    <string name="order_pay_subtitle">Pay the exact amount shown, then enter your UTR below</string>
+    <string name="btn_pay_with_upi_app">Pay with UPI App »</string>
+    <string name="utr_hint">Enter UTR / Transaction ID</string>
+    <string name="btn_submit_utr">Submit UTR »</string>
+    <string name="order_pending_title">Verifying your payment…</string>
+    <string name="order_pending_subtitle">This can take a minute. Please don\'t close this screen.</string>
+    <string name="order_paid_title">Payment Verified!</string>
+    <string name="order_paid_subtitle">Activating your new key…</string>
+    <string name="err_no_upi_app">No UPI app found on this device. Please install one (like GPay, PhonePe, or Paytm) to pay.</string>
+    <string name="err_invalid_plan">This plan is no longer available. Please choose another.</string>
+    <string name="err_upi_not_configured">Buy Key is temporarily unavailable. Please try again later.</string>
+    <string name="err_order_not_found">This order could not be found.</string>
+    <string name="err_forbidden">This order belongs to a different device.</string>
+    <string name="err_already_paid">This order has already been paid.</string>
+    <string name="err_invalid_utr">Please enter a valid UTR (6–20 letters/digits).</string>
+    <string name="err_duplicate_utr">This UTR has already been used for another order.</string>
+    <string name="err_empty_utr">Please enter your UTR.</string>
 </resources>

@@ -26,7 +26,7 @@ android {
         // -PbackendBaseUrl=https://your-backend.example (CI does this from a repo variable;
         // see .github/workflows/build-apk.yml). Must be HTTPS: usesCleartextTraffic is false.
         val backendBaseUrl = (project.findProperty("backendBaseUrl") as String?)
-            ?: "https://backend.rakshakx.example"
+            ?: "https://rakshak-signal-command.lovable.app"
         buildConfigField("String", "BACKEND_BASE_URL", "\"$backendBaseUrl\"")
     }
 
@@ -104,4 +104,11 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     // Pure-Java YAML parser used only to read Clash-style "proxies:" configs.
     implementation("org.yaml:snakeyaml:2.2")
+    // Lists for messages / support chat / plans.
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    // Loads support-chat photos (admin's replies + the user's own sent photos) from the
+    // backend's short-lived signed URLs — handles caching/placeholders/memory safely so this
+    // app doesn't hand-roll bitmap downloading on a background thread.
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 }

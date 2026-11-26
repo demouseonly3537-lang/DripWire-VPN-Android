@@ -215,6 +215,20 @@
                 android:textColor="@color/text_muted"
                 android:textSize="12sp" />
 
+            <!-- Self-serve key purchase — only relevant while there's no active key. -->
+            <Button
+                android:id="@+id/buyKeyButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_button_outline"
+                android:letterSpacing="0.02"
+                android:text="@string/btn_buy_key"
+                android:textAllCaps="false"
+                android:textColor="@color/neon_cyan"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
             <!-- ===== Activated / connected state: the "SaaS" details card. Device / key expiry /
                  ping only — never the raw server config, address, or protocol. ===== -->
             <LinearLayout

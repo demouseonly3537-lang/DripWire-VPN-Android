@@ -10,9 +10,13 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import cc.dripwire.vpn.buykey.BuyKeyActivity
 import cc.dripwire.vpn.databinding.ActivityMainBinding
+import cc.dripwire.vpn.gate.ChannelGateActivity
 import cc.dripwire.vpn.license.DeviceIdentity
 import cc.dripwire.vpn.license.LicenseClient
+import cc.dripwire.vpn.messages.MessagesActivity
+import cc.dripwire.vpn.support.SupportActivity
 import java.util.Locale
 import kotlin.concurrent.thread
 
@@ -57,8 +61,45 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+    private val buyKeyLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val data = result.data ?: return@registerForActivityResult
+            val key = data.getStringExtra(BuyKeyActivity.EXTRA_KEY).orEmpty()
+            if (key.isBlank()) return@registerForActivityResult
+
+            if (data.getBooleanExtra(BuyKeyActivity.EXTRA_ACTIVATED, false)) {
+                // The new key was already activated for this device inside BuyKeyActivity —
+                // just adopt the result, same as a normal successful activate().
+                prefs.edit().putString(PREF_LAST_KEY, key).apply()
+                pendingConfig = data.getStringExtra(BuyKeyActivity.EXTRA_CONFIG)
+                pendingExpiresAt = data.getLongExtra(BuyKeyActivity.EXTRA_EXPIRES_AT, -1L).takeIf { it >= 0 }
+                pendingServerTime = data.getLongExtra(BuyKeyActivity.EXTRA_SERVER_TIME, System.currentTimeMillis())
+                pendingDeviceLabel = data.getStringExtra(BuyKeyActivity.EXTRA_DEVICE_LABEL).orEmpty()
+                pendingKey = key
+                binding.keyInput.setText(key)
+                showActivatedState()
+            } else {
+                // Payment was verified and a key was issued, but the automatic activation call
+                // itself failed (e.g. a network hiccup right after purchase) — fall back to the
+                // normal key-entry path with the new key pre-filled, so the user can just tap
+                // Submit Key once more and get the same error handling as any other key.
+                binding.keyInput.setText(key)
+                validateKeyAndActivate()
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Telegram/WhatsApp join gate — shown once per app process, before anything else.
+        if (!DripwireApp.channelGatePassed) {
+            DripwireApp.channelGatePassed = true
+            startActivity(Intent(this, ChannelGateActivity::class.java))
+            finish()
+            return
+        }
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -76,15 +117,22 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.keyVisibilityToggle.setOnClickListener { toggleKeyVisibility() }
+        binding.buyKeyButton.setOnClickListener {
+            buyKeyLauncher.launch(Intent(this, BuyKeyActivity::class.java))
+        }
+        binding.bellButton.setOnClickListener {
+            startActivity(Intent(this, MessagesActivity::class.java))
+        }
+        binding.navSupport.setOnClickListener {
+            startActivity(Intent(this, SupportActivity::class.java))
+        }
 
         val comingSoon = View.OnClickListener {
             Toast.makeText(this, R.string.toast_coming_soon, Toast.LENGTH_SHORT).show()
         }
         binding.menuButton.setOnClickListener(comingSoon)
-        binding.bellButton.setOnClickListener(comingSoon)
         binding.gearButton.setOnClickListener(comingSoon)
         binding.navStats.setOnClickListener(comingSoon)
-        binding.navSupport.setOnClickListener(comingSoon)
     }
 
     override fun onDestroy() {
@@ -233,6 +281,7 @@ class MainActivity : AppCompatActivity() {
         binding.enterKeyPromptText.visibility = View.VISIBLE
         binding.keyInputLayout.visibility = View.VISIBLE
         binding.keyFormatHint.visibility = View.VISIBLE
+        binding.buyKeyButton.visibility = View.VISIBLE
         binding.connectedCard.visibility = View.GONE
     }
 
@@ -245,6 +294,7 @@ class MainActivity : AppCompatActivity() {
         binding.enterKeyPromptText.visibility = View.GONE
         binding.keyInputLayout.visibility = View.GONE
         binding.keyFormatHint.visibility = View.GONE
+        binding.buyKeyButton.visibility = View.GONE
         binding.connectedCard.visibility = View.VISIBLE
 
         binding.deviceValueText.text = deviceLabel.ifBlank { DeviceIdentity.displayName() }

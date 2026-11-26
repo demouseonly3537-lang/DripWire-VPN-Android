@@ -27,6 +27,26 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".gate.ChannelGateActivity"
+            android:exported="false"
+            android:theme="@style/Theme.DripWire" />
+
+        <activity
+            android:name=".messages.MessagesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.DripWire" />
+
+        <activity
+            android:name=".support.SupportActivity"
+            android:exported="false"
+            android:theme="@style/Theme.DripWire" />
+
+        <activity
+            android:name=".buykey.BuyKeyActivity"
+            android:exported="false"
+            android:theme="@style/Theme.DripWire" />
+
         <service
             android:name=".DripwireVpnService"
             android:exported="true"
